@@ -1,9 +1,17 @@
+"""
+This file shows example usage of the 'multi-tracker' and 'tracker' files and associated classes. The main method reads,
+specified video, detects objects and passes them to 'multi_tracker' object for tracking. Afterwards it displays the
+results and writes the results. The parameters for the 'multi_tracker' object have to be manually adjusted for any other
+footage.
+"""
+
 from numba import njit
 from multi_tracker import *
 import numpy as np
 import cv2
 
-
+"""Function for subtracting two images, and getting absolute difference rather than clamping negative values. This
+function requires to be run in numba, as otherwise it would be too slow"""
 @njit
 def subtract_absolute(img1, img2):
     (height, width) = img1.shape
@@ -18,31 +26,18 @@ def subtract_absolute(img1, img2):
     return result
 
 
-# Function for finding an overlapping area between two rectangles
-def check_box_intersection(box1, box2):
-    x1, y1, w1, h1 = cv2.boundingRect(box1)
-    x2, y2, w2, h2 = cv2.boundingRect(box2)
-
-    x_overlap = max(0, min(x1 + w1, x2 + w2) - max(x1, x2))
-    y_overlap = max(0, min(y1 + h1, y2 + h2) - max(y1, y2))
-    overlapArea = x_overlap * y_overlap
-
-    return overlapArea
-
-
 def main():
     # Kernel for performing morphological transformations
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    # kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 1))
 
     # Initializing the background subtractor
     subtract = cv2.createBackgroundSubtractorMOG2(history=200)
 
     # Opening the video file
-    cap = cv2.VideoCapture('test.mp4')
+    cap = cv2.VideoCapture('videos/test.mp4')
 
     # File for storing the recorded video
-    result = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc(*'MJPG'), 24, (640, 360))
+    result = cv2.VideoWriter('videos/output.avi', cv2.VideoWriter_fourcc(*'MJPG'), 24, (640, 360))
 
     """Initializing a multi object tracker. The arguments for the tracker are: Maximum allowed area difference,
     rotation difference, velocity difference, histogram difference and contour difference, respectively"""
@@ -93,7 +88,8 @@ def main():
 
             # Set the frame rate for displaying the video
             frame_rate = 44
-            print("Analysis done, showing video.\nNumber of fish detected in the footage: " + str(len(old_trackers)) + " fish.")
+            print("Analysis done, showing video.\nNumber of fish detected in the footage: " + str(
+                len(old_trackers)) + " fish.")
 
         # If there are no frames to display, that means that video has ended
         if not ret:
@@ -144,34 +140,38 @@ def main():
 
             track.update(contours, int(cap.get(cv2.CAP_PROP_POS_FRAMES)), frame)
 
-            trackers = track.get_trackers()
-
-            for t in trackers:
-                c = t.get_contour_by_frame(int(cap.get(cv2.CAP_PROP_POS_FRAMES)))
-                if c is not None:
-                    if len(t.features_list) > 1:
-                        x, y, w, h = cv2.boundingRect(c)
-                        cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
-                        rect = cv2.minAreaRect(c)
-                        box = cv2.boxPoints(rect)
-                        box = np.int0(box)
-                        cv2.drawContours(frame, [box], 0, t.color, 2)
-                    else:
-                        x, y, w, h = cv2.boundingRect(c)
-                        cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
-                        rect = cv2.minAreaRect(c)
-                        box = cv2.boxPoints(rect)
-                        box = np.int0(box)
-                        cv2.drawContours(frame, [box], 0, t.color, 2)
-
-            cv2.imshow("output", cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA))
+            """Uncomment this if you want to see the initial analysis"""
+            # trackers = track.get_trackers()
+            #
+            # for t in trackers:
+            #     c = t.get_contour_by_frame(int(cap.get(cv2.CAP_PROP_POS_FRAMES)))
+            #     if c is not None:
+            #         if len(t.features_list) > 1:
+            #             x, y, w, h = cv2.boundingRect(c)
+            #             cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2,
+            #                         (255, 0, 0), 2)
+            #             rect = cv2.minAreaRect(c)
+            #             box = cv2.boxPoints(rect)
+            #             box = np.int0(box)
+            #             cv2.drawContours(frame, [box], 0, t.color, 2)
+            #         else:
+            #             x, y, w, h = cv2.boundingRect(c)
+            #             cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2,
+            #                         (0, 0, 255), 2)
+            #             rect = cv2.minAreaRect(c)
+            #             box = cv2.boxPoints(rect)
+            #             box = np.int0(box)
+            #             cv2.drawContours(frame, [box], 0, t.color, 2)
+            #
+            # cv2.imshow("output", cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA))
 
         else:
             for t in old_trackers:
                 c = t.get_contour_by_frame(int(cap.get(cv2.CAP_PROP_POS_FRAMES)))
                 if c is not None:
                     x, y, w, h = cv2.boundingRect(c)
-                    cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
+                    cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0),
+                                2)
                     rect = cv2.minAreaRect(c)
                     box = cv2.boxPoints(rect)
                     box = np.int0(box)

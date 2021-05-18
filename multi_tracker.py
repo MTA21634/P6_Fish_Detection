@@ -2,8 +2,6 @@
 This file contains a class for multiple object tracking. The class associates detection that are passed to it,
 based on the parameters this class has been initialized. It does so by instantiating 'tracker' objects, and passing
 them their associated detections.
-
-This class has been made by MTA21634, for a sixth semester project in Medialogy, AAU.
 """
 
 from tracker import *

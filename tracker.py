@@ -2,8 +2,6 @@
 This file contains a class for a single object tracking 'tracker' and additional functions for vector, histogram and
 object orientation calculations. The class receives detections from a 'multi-tracker' object and keeps track of object
 occurrences within a video sequence. It associates detections based on argument values that are passed when initialized.
-
-This class has been made by MTA21634, for a sixth semester project in Medialogy, AAU.
 """
 
 import random
@@ -74,17 +72,23 @@ def get_histogram(img):
 # Class for individual object tracking
 class tracker:
     def __init__(self, initial_object, initial_frame, initial_img, ID, a_T, o_T, v_T, h_T, c_T):
-        self.positions = {initial_frame: initial_object}
-        self.features_list = []
-        self.id = ID
-        self.global_a_T = a_T
-        self.global_o_T = o_T
-        self.global_v_T = v_T
-        self.global_h_T = h_T
-        self.global_c_T = c_T
+        self.positions = {initial_frame: initial_object}  # A dictionary of all the contour appearances by frame
+        self.features_list = []  # A list for storing feature vectors
+        self.id = ID  # Unique id for the tracker
+        self.global_a_T = a_T  # Global area difference threshold
+        self.global_o_T = o_T  # Global orientation difference threshold
+        self.global_v_T = v_T  # Global velocity difference threshold
+        self.global_h_T = h_T  # Global histogram difference threshold
+        self.global_c_T = c_T  # Global contour difference threshold
+
+        # Random unique color for the tracker
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
+        # Add features of initialized object
         self.add_new_feature(get_centroid(initial_object), cv2.contourArea(initial_object),
                              get_orientation(initial_object), initial_frame)
+
+        # Calculate a histogram of initial object's ROI
         self.hist = get_histogram(create_roi(initial_object, initial_img))
 
     def check_if_similar(self, contour, img):
