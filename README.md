@@ -1,2 +1,4 @@
 # P6, Fish Detection and Tracking.
-![alt text](https://github.com/ArijusGrotuzas/AI_Evolving_Creatures/blob/main/Examples/AI%20example.gif?raw=true)
+
+Example output of the code:
+![alt text](https://github.com/MTA21634/P6_Fish_Detection/blob/main/examples/example_1.png?raw=true)
