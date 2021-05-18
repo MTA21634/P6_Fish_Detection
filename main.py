@@ -35,10 +35,8 @@ def main():
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     # kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 1))
 
+    # Initializing the background subtractor
     subtract = cv2.createBackgroundSubtractorMOG2(history=200)
-
-    # Initializing background subtraction
-    # subtract = cv2.createBackgroundSubtractorKNN(history=200)
 
     # Opening the video file
     cap = cv2.VideoCapture('test.mp4')
@@ -46,25 +44,25 @@ def main():
     # File for storing the recorded video
     result = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc(*'MJPG'), 24, (640, 360))
 
-    # Initializing a multi object tracker
-    track = multi_tracker(30000, 160, 130, 0.45, 0.48)
+    """Initializing a multi object tracker. The arguments for the tracker are: Maximum allowed area difference,
+    rotation difference, velocity difference, histogram difference and contour difference, respectively"""
+    track = multi_tracker(25000, 180, 80, 0.45, 0.35)
 
     # Reading first frame and applying histogram equalization to it
     ret, frame = cap.read()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     hist = cv2.equalizeHist(gray)
 
-    # Converting the image to 32-bit floating point
-    # For storing the running average of all the frames
+    # Converting the image to a 32-bit floating point. For storing the running average of all the frames
     avg = np.float32(hist)
 
     # A boolean for checking if the video is being analyzed
     analyzing = True
 
-    # A variable for storing the the frame rate value
+    # A variable for storing the the frame rate
     frame_rate = 1
 
-    # A variable for storing all the trackers
+    # A variable for storing all the final trackers
     old_trackers = None
 
     print("Analyzing video...")
@@ -139,7 +137,7 @@ def main():
             combined_fg_mask = cv2.morphologyEx(combined_fg_mask, cv2.MORPH_OPEN, kernel, iterations=9)
 
             # Median blurring to smooth out the blocky objects
-            # combined_fg_mask = cv2.medianBlur(combined_fg_mask, 17)
+            combined_fg_mask = cv2.medianBlur(combined_fg_mask, 17)
 
             # Extracting objects from the frame
             contours, _ = cv2.findContours(combined_fg_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -173,7 +171,7 @@ def main():
                 c = t.get_contour_by_frame(int(cap.get(cv2.CAP_PROP_POS_FRAMES)))
                 if c is not None:
                     x, y, w, h = cv2.boundingRect(c)
-                    cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
+                    cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
                     rect = cv2.minAreaRect(c)
                     box = cv2.boxPoints(rect)
                     box = np.int0(box)
