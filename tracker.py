@@ -38,13 +38,13 @@ def get_centroid(c):
 
 
 # Function that finds orientation of a contour
-def get_orientation(pts):
+def get_orientation(contour):
     # Construct a buffer used by the pca analysis
-    sz = len(pts)
-    data_pts = np.empty((sz, 2), dtype=np.float64)
+    size = len(contour)
+    data_pts = np.empty((size, 2), dtype=np.float64)
     for i in range(data_pts.shape[0]):
-        data_pts[i, 0] = pts[i, 0, 0]
-        data_pts[i, 1] = pts[i, 0, 1]
+        data_pts[i, 0] = contour[i, 0, 0]
+        data_pts[i, 1] = contour[i, 0, 1]
 
     # Perform PCA analysis
     mean = np.empty(0)
@@ -107,7 +107,7 @@ class tracker:
             new_hist = get_histogram(create_roi(contour, img))
 
             # Find the difference between two histograms based on Chebyshev's distance
-            d = dist.chebyshev(self.hist, get_histogram(create_roi(contour, img)))
+            d = dist.chebyshev(self.hist, new_hist)
 
             # Find the similarity between two contours
             d2 = cv2.matchShapes(self.get_contour_by_frame(self.features_list[-1]["frame"]), contour, 1, 0.0)

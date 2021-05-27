@@ -54,7 +54,7 @@ class multi_tracker:
     # Remove trackers that might be faulty or might be tracking noise
     def cull_trackers(self):
         for t in reversed(self.old_trackers):
-            if t.check_if_noise(12):
+            if t.check_if_noise(8):
                 self.old_trackers.remove(t)
             else:
                 continue

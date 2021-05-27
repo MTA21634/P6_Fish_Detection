@@ -12,6 +12,8 @@ import cv2
 
 """Function for subtracting two images, and getting absolute difference rather than clamping negative values. This
 function requires to be run in numba, as otherwise it would be too slow"""
+
+
 @njit
 def subtract_absolute(img1, img2):
     (height, width) = img1.shape
@@ -28,20 +30,20 @@ def subtract_absolute(img1, img2):
 
 def main():
     # Kernel for performing morphological transformations
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (5, 5))
 
     # Initializing the background subtractor
-    subtract = cv2.createBackgroundSubtractorMOG2(history=200)
+    subtract = cv2.createBackgroundSubtractorMOG2(history=300)
 
     # Opening the video file
-    cap = cv2.VideoCapture('videos/test.mp4')
+    cap = cv2.VideoCapture('videos/fish_test1.mp4')
 
-    # File for storing the recorded video
-    result = cv2.VideoWriter('videos/output.avi', cv2.VideoWriter_fourcc(*'MJPG'), 24, (640, 360))
+    # File for storing the output video
+    result = cv2.VideoWriter('videos/results/detection/output0.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 14, (1920, 1080))
 
     """Initializing a multi object tracker. The arguments for the tracker are: Maximum allowed area difference,
     rotation difference, velocity difference, histogram difference and contour difference, respectively"""
-    track = multi_tracker(25000, 180, 80, 0.45, 0.35)
+    track = multi_tracker(3000, 190, 130, 0.45, 0.9)  # 3000, 190, 130, 0.45, 0.9 # 50000, 360, 220, 1, 1
 
     # Reading first frame and applying histogram equalization to it
     ret, frame = cap.read()
@@ -102,14 +104,14 @@ def main():
             hist = cv2.equalizeHist(gray)
 
             # Updating the running average
-            cv2.accumulateWeighted(hist, avg, 0.08)
+            cv2.accumulateWeighted(hist, avg, 0.1)
 
             # Converting running average from 32-bit floating point to 8-bit int
             res_avg = cv2.convertScaleAbs(avg)
 
             # Getting a second foreground mask
             diff = subtract_absolute(res_avg, hist)
-            __, fg_mask1 = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            otsu, fg_mask1 = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
             # Extracting the foreground objects
             fg_mask2 = subtract.apply(hist)
@@ -138,9 +140,10 @@ def main():
             # Extracting objects from the frame
             contours, _ = cv2.findContours(combined_fg_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+            # Update the tracker with currently extracted detections
             track.update(contours, int(cap.get(cv2.CAP_PROP_POS_FRAMES)), frame)
 
-            """Uncomment this if you want to see the initial analysis"""
+            """Uncomment this if you want to see the initial tracking"""
             # trackers = track.get_trackers()
             #
             # for t in trackers:
@@ -153,7 +156,7 @@ def main():
             #             rect = cv2.minAreaRect(c)
             #             box = cv2.boxPoints(rect)
             #             box = np.int0(box)
-            #             cv2.drawContours(frame, [box], 0, t.color, 2)
+            #             cv2.drawContours(frame, [box], 0, t.color, 3)
             #         else:
             #             x, y, w, h = cv2.boundingRect(c)
             #             cv2.putText(frame, "#ID: " + str(t.get_id()), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2,
@@ -161,9 +164,8 @@ def main():
             #             rect = cv2.minAreaRect(c)
             #             box = cv2.boxPoints(rect)
             #             box = np.int0(box)
-            #             cv2.drawContours(frame, [box], 0, t.color, 2)
-            #
-            # cv2.imshow("output", cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA))
+            #             cv2.drawContours(frame, [box], 0, t.color, 3)
+            # cv2.imshow("output", cv2.resize(frame, (960, 544), interpolation=cv2.INTER_AREA))
 
         else:
             for t in old_trackers:
@@ -175,9 +177,8 @@ def main():
                     rect = cv2.minAreaRect(c)
                     box = cv2.boxPoints(rect)
                     box = np.int0(box)
-                    cv2.drawContours(frame, [box], 0, t.color, 2)
+                    cv2.drawContours(frame, [box], 0, t.color, 3)
 
-            result.write(frame)
             cv2.imshow("output", cv2.resize(frame, (960, 544), interpolation=cv2.INTER_AREA))
 
         if cv2.waitKey(frame_rate) & 0xFF == ord('q'):
