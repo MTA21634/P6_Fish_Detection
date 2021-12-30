@@ -1,4 +1,4 @@
-# P6, Fish Detection and Tracking.
+# Fish Detection and Tracking.
 
 Example output of the code:
 
